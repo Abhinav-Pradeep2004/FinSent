@@ -6,4 +6,4 @@ pandas
 vaderSentiment
 matplotlib
 scikit-learn 
-tensorflow
+tensorflow  
