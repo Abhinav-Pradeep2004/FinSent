@@ -1,3 +1,9 @@
+numpy
+pandas
 dash
 yfinance
 pandas
+vaderSentiment
+matplotlib
+scikit-learn 
+tensorflow

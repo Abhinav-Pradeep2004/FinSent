@@ -4,6 +4,7 @@ import dash
 from dash import dcc, html, Input, Output, dash_table
 import pandas as pd
 from src.utils.yfinance_fetcher import fetch_stock_data
+from src.utils.sentiment_analyzer import analyze_news_sentiment
 
 # Setup app with SEO metadata
 app = dash.Dash(
@@ -85,18 +86,25 @@ app.layout = html.Div(style={'backgroundColor': '#F5F5F5', 'padding': '30px'}, c
     html.Div(id='output-area', style={'marginBottom': '20px', 'fontWeight': 'bold'}),
 
     html.Div(id='table-container', style={'marginBottom': '30px'}),
-    
+
     html.Div([
         html.H3("📊 Closing Price Trend", style={'color': '#111827'}),
         dcc.Graph(id='line-chart')
-    ], style={'backgroundColor': 'white', 'padding': '20px', 'borderRadius': '10px', 'boxShadow': '0 2px 5px rgba(0,0,0,0.1)'})
+    ], style={'backgroundColor': 'white', 'padding': '20px', 'borderRadius': '10px', 'boxShadow': '0 2px 5px rgba(0,0,0,0.1)'}),
+
+    html.Div([
+        html.H3("🧠 AI Sentiment Insights", style={'color': '#111827'}),
+        html.Div(id='sentiment-output')
+    ], style={'backgroundColor': 'white', 'padding': '20px', 'borderRadius': '10px', 'marginTop': '40px',
+              'boxShadow': '0 2px 5px rgba(0,0,0,0.1)'})
 ])
 
 # Callback
 @app.callback(
     [Output('table-container', 'children'),
      Output('line-chart', 'figure'),
-     Output('output-area', 'children')],
+     Output('output-area', 'children'),
+     Output('sentiment-output', 'children')],
     [Input('fetch-btn', 'n_clicks')],
     [dash.dependencies.State('ticker-select', 'value'),
      dash.dependencies.State('period-select', 'value'),
@@ -104,13 +112,14 @@ app.layout = html.Div(style={'backgroundColor': '#F5F5F5', 'padding': '30px'}, c
 )
 def update_stock_data(n_clicks, ticker, period, interval):
     if n_clicks == 0:
-        return "", {}, ""
+        return "", {}, "", ""
 
     df = fetch_stock_data(ticker, period, interval)
 
     if df is None or df.empty:
-        return "", {}, html.Div("❌ Error fetching data. Try again.", style={"color": "red"})
+        return "", {}, html.Div("❌ Error fetching data. Try again.", style={"color": "red"}), ""
 
+    # Create table
     df_reset = df.reset_index()
     table = dash_table.DataTable(
         data=df_reset.tail(10).to_dict('records'),
@@ -121,6 +130,7 @@ def update_stock_data(n_clicks, ticker, period, interval):
         page_size=10
     )
 
+    # Create figure
     figure = {
         'data': [{
             'x': df.index,
@@ -138,7 +148,28 @@ def update_stock_data(n_clicks, ticker, period, interval):
         }
     }
 
-    return table, figure, html.Div(f"✅ Showing data for {ticker}", style={"color": "green"})
+    # Dummy news headlines
+    sample_headlines = [
+        f"{ticker} stock surges after strong quarterly results.",
+        f"Analysts warn about inflation affecting {ticker}.",
+        f"{ticker} expected to outperform peers in the coming months."
+    ]
+
+    sentiment_results = analyze_news_sentiment(sample_headlines)
+
+    sentiment_html = html.Div([
+        html.H4("📰 News Sentiment", style={'marginTop': '30px'}),
+        html.Ul([
+            html.Li(f"{item['headline']} → {item['sentiment']} ({item['score']})",
+                    style={"color": "green" if item['sentiment'] == "Positive"
+                           else "red" if item['sentiment'] == "Negative"
+                           else "gray"})
+            for item in sentiment_results
+        ])
+    ])
+
+    return table, figure, html.Div(f"✅ Showing data for {ticker}", style={"color": "green"}), sentiment_html
+
 
 # Run the server
 if __name__ == '__main__':

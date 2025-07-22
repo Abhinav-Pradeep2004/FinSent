@@ -12,8 +12,12 @@ def fetch_stock_data(ticker_symbol="RELIANCE.NS", period="1mo", interval="1d"):
         if hist.empty:
             raise ValueError("No data found.")
 
+        # Create data folder if not exists
         os.makedirs("data", exist_ok=True)
-        hist.to_csv("data/stock_data.csv")
+
+        # Save with dynamic filename based on ticker
+        safe_filename = ticker_symbol.replace(".", "_")  # To avoid issues in file naming
+        hist.to_csv(f"data/{safe_filename}_data.csv")
 
         return hist
     except Exception as e:
