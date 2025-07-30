@@ -5,12 +5,12 @@ from src.utils.yfinance_fetcher import fetch_stock_data
 from src.utils.sentiment_analyzer import analyze_news_sentiment, analyze_sentiment_multiple_stocks
 from src.utils.news_fetcher import fetch_headlines_from_yahoo
 
-# 📈 Title and description
+# 🔧 Page config
 st.set_page_config(page_title="FinSent – Stock Dashboard", layout="wide")
-st.title("📈 FinSent – Stock Price Dashboard")
-st.write("Track real-time stock prices and news sentiment analysis for top stocks.")
+st.title("📈 FinSent – Stock Analytics Dashboard")
+st.write("Track live stock prices and news sentiment analysis across multiple sectors.")
 
-# 🔹 Stock options
+# 🎯 Stock Dictionary
 stock_options = {
     # US Tech Giants
     'Apple (AAPL)': 'AAPL',
@@ -72,42 +72,59 @@ stock_options = {
     'Bajaj Auto (BAJAJ-AUTO.NS)': 'BAJAJ-AUTO.NS',
 }
 
+
 period_options = ["5d", "1mo", "3mo", "6mo", "1y", "2y", "5y"]
 interval_options = ["1d", "1h", "30m", "15m", "5m"]
 
-# 🔹 Sidebar selections
-st.sidebar.header("Select Options")
-selected_stock = st.sidebar.selectbox("Select Stock", list(stock_options.keys()))
-period = st.sidebar.selectbox("Select Period", period_options, index=1)
-interval = st.sidebar.selectbox("Select Interval", interval_options, index=0)
+# ----------------------
+# 🚀 TABS for UI Layout
+# ----------------------
 
-# ⏳ Fetch button
-if st.sidebar.button("🗓️ Fetch Data"):
-    ticker = stock_options[selected_stock]
-    df = fetch_stock_data(ticker, period, interval)
+tab1, tab2, tab3 = st.tabs(["📉 Single Stock Explorer", "🧠 News Sentiment", "📊 Multi-Stock Comparison"])
 
-    if df is None or df.empty:
-        st.error("Failed to fetch data. Try again.")
-    else:
-        st.success(f"Data fetched for {ticker}")
+# ----------------------
+# 📉 Tab 1: Single Stock Explorer
+# ----------------------
+with tab1:
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        selected_stock = st.selectbox("Choose Stock", list(stock_options.keys()))
+    with col2:
+        period = st.selectbox("Period", period_options, index=1)
+    with col3:
+        interval = st.selectbox("Interval", interval_options, index=0)
 
-        # 🔍 Show table
-        st.subheader("Recent Stock Data")
-        st.dataframe(df.tail(10).reset_index(), use_container_width=True)
+    if st.button("🔄 Fetch Stock Data"):
+        ticker = stock_options[selected_stock]
+        df = fetch_stock_data(ticker, period, interval)
 
-        # 🔢 Line Chart
-        st.subheader("📊 Closing Price Trend")
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=df.index, y=df['Close'], mode='lines', name=ticker))
-        fig.update_layout(title=f"Closing Prices of {ticker}", xaxis_title="Date", yaxis_title="Price")
-        st.plotly_chart(fig, use_container_width=True)
+        if df is None or df.empty:
+            st.error("Failed to fetch stock data. Try again.")
+        else:
+            st.success(f"Showing data for {ticker}")
 
-        # 🧠 News Sentiment
-        st.subheader("🔍 News Sentiment Analysis")
+            st.subheader("📑 Latest Stock Data")
+            st.dataframe(df.tail(10).reset_index(), use_container_width=True)
+
+            st.subheader("📈 Closing Price Trend")
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=df.index, y=df['Close'], mode='lines', name=ticker))
+            fig.update_layout(title=f"{ticker} Closing Prices", xaxis_title="Date", yaxis_title="Price")
+            st.plotly_chart(fig, use_container_width=True)
+
+# ----------------------
+# 🧠 Tab 2: News Sentiment
+# ----------------------
+with tab2:
+    st.subheader("🔍 News-Based Sentiment Analysis")
+    selected_sent_stock = st.selectbox("Select Stock for Sentiment", list(stock_options.keys()), key="sentiment_selector")
+    ticker = stock_options[selected_sent_stock]
+
+    if st.button("🧠 Analyze News Sentiment"):
         headlines = fetch_headlines_from_yahoo(ticker)
 
         if not headlines:
-            st.warning("No recent news found.")
+            st.warning("No recent headlines found.")
         else:
             sentiment_results = analyze_news_sentiment(headlines)
             for item in sentiment_results:
@@ -116,48 +133,40 @@ if st.sidebar.button("🗓️ Fetch Data"):
                          "gray")
                 st.markdown(f"<span style='color:{color}'>{item['headline']} → {item['sentiment']} ({item['score']})</span>", unsafe_allow_html=True)
 
-# 🔹 Optional: Show stock-wise sentiment comparison chart
-st.subheader("📊 Stock-wise Sentiment Graph (Top 5 Selections)")
-selected_top5 = st.multiselect("Compare Multiple Stocks", list(stock_options.keys()), max_selections=5)
+# ----------------------
+# 📊 Tab 3: Multi-stock Sentiment Chart
+# ----------------------
+with tab3:
+    st.subheader("📊 Stock-wise Sentiment Comparison (Top 5)")
+    selected_top5 = st.multiselect("Select up to 5 Stocks", list(stock_options.keys()), max_selections=5)
 
-if selected_top5:
-    tickers = [stock_options[label] for label in selected_top5]
+    if selected_top5:
+        tickers = [stock_options[label] for label in selected_top5]
+        sentiment_data = analyze_sentiment_multiple_stocks(tickers)
 
-    # Run sentiment analysis
-    sentiment_data = analyze_sentiment_multiple_stocks(tickers)
+        stock_names = list(sentiment_data.keys())
+        for s in stock_names:
+            if 'positive' not in sentiment_data[s] or \
+               'negative' not in sentiment_data[s] or \
+               'neutral' not in sentiment_data[s]:
+                st.warning(f"Missing sentiment keys for: {s}")
+                st.json(sentiment_data[s])
 
-    # Get stock names
-    stock_names = list(sentiment_data.keys())
+        positive_scores = [sentiment_data[s].get('positive', 0) for s in stock_names]
+        negative_scores = [sentiment_data[s].get('negative', 0) for s in stock_names]
+        neutral_scores  = [sentiment_data[s].get('neutral', 0) for s in stock_names]
 
-    # Debug print for missing sentiment keys
-    for s in stock_names:
-        if 'positive' not in sentiment_data[s] or \
-           'negative' not in sentiment_data[s] or \
-           'neutral' not in sentiment_data[s]:
-            st.warning(f"Missing sentiment keys for stock: {s}")
-            st.json(sentiment_data[s])
+        fig_line = go.Figure()
 
-    # Safely access sentiment scores with defaults
-    positive_scores = [sentiment_data[s].get('positive', 0) for s in stock_names]
-    negative_scores = [sentiment_data[s].get('negative', 0) for s in stock_names]
-    neutral_scores  = [sentiment_data[s].get('neutral', 0) for s in stock_names]
+        fig_line.add_trace(go.Scatter(x=stock_names, y=positive_scores, mode='lines+markers', name='Positive', line=dict(color='green')))
+        fig_line.add_trace(go.Scatter(x=stock_names, y=negative_scores, mode='lines+markers', name='Negative', line=dict(color='red')))
+        fig_line.add_trace(go.Scatter(x=stock_names, y=neutral_scores, mode='lines+markers', name='Neutral', line=dict(color='gray')))
 
-    # Now use these scores for charting or display
-    # For example, a bar chart using Plotly or Streamlit's st.bar_chart
+        fig_line.update_layout(
+            title="Sentiment Comparison Across Stocks",
+            xaxis_title="Stock",
+            yaxis_title="Sentiment Score",
+            template="plotly_white"
+        )
 
-
-    fig_bar = go.Figure(data=[
-        go.Bar(x=stock_names, y=positive_scores, name="Positive", marker_color='green'),
-        go.Bar(x=stock_names, y=negative_scores, name="Negative", marker_color='red'),
-        go.Bar(x=stock_names, y=neutral_scores, name="Neutral", marker_color='gray'),
-    ])
-
-    fig_bar.update_layout(
-        title="Stock-wise Sentiment Analysis",
-        barmode='stack',
-        xaxis_title="Stocks",
-        yaxis_title="Sentiment Score",
-        template="plotly_white"
-    )
-
-    st.plotly_chart(fig_bar, use_container_width=True)
+        st.plotly_chart(fig_line, use_container_width=True)
