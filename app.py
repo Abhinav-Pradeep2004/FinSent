@@ -5,8 +5,9 @@ from dash import dcc, html, Input, Output, dash_table
 import pandas as pd
 from src.utils.yfinance_fetcher import fetch_stock_data
 from src.utils.sentiment_analyzer import analyze_news_sentiment
+from src.utils.news_fetcher import fetch_headlines_from_yahoo  # ✅ New import
 
-# Setup app with SEO metadata
+# Setup app
 app = dash.Dash(
     __name__,
     title="FinSent – Live Stock Dashboard",
@@ -23,14 +24,31 @@ server = app.server  # For deployment
 
 # Dropdown options
 stock_options = [
+    # US Stocks
     {'label': 'Apple (AAPL)', 'value': 'AAPL'},
+    {'label': 'Google (GOOG)', 'value': 'GOOG'},
+    {'label': 'Microsoft (MSFT)', 'value': 'MSFT'},
+    {'label': 'Amazon (AMZN)', 'value': 'AMZN'},
+    {'label': 'Tesla (TSLA)', 'value': 'TSLA'},
+    {'label': 'Meta Platforms (META)', 'value': 'META'},
+    {'label': 'NVIDIA (NVDA)', 'value': 'NVDA'},
+    {'label': 'Netflix (NFLX)', 'value': 'NFLX'},
+    {'label': 'Intel (INTC)', 'value': 'INTC'},
+    {'label': 'Adobe (ADBE)', 'value': 'ADBE'},
+
+    # Indian Stocks
     {'label': 'Reliance (RELIANCE.NS)', 'value': 'RELIANCE.NS'},
     {'label': 'Infosys (INFY.NS)', 'value': 'INFY.NS'},
     {'label': 'TCS (TCS.NS)', 'value': 'TCS.NS'},
-    {'label': 'Google (GOOG)', 'value': 'GOOG'},
-    {'label': 'Microsoft (MSFT)', 'value': 'MSFT'},
-    {'label': 'Amazon (AMZN)', 'value': 'AMZN'}
+    {'label': 'HDFC Bank (HDFCBANK.NS)', 'value': 'HDFCBANK.NS'},
+    {'label': 'ICICI Bank (ICICIBANK.NS)', 'value': 'ICICIBANK.NS'},
+    {'label': 'State Bank of India (SBIN.NS)', 'value': 'SBIN.NS'},
+    {'label': 'Wipro (WIPRO.NS)', 'value': 'WIPRO.NS'},
+    {'label': 'Hindustan Unilever (HINDUNILVR.NS)', 'value': 'HINDUNILVR.NS'},
+    {'label': 'Larsen & Toubro (LT.NS)', 'value': 'LT.NS'},
+    {'label': 'Bajaj Finance (BAJFINANCE.NS)', 'value': 'BAJFINANCE.NS'}
 ]
+
 
 period_options = ["5d", "1mo", "3mo", "6mo", "1y", "2y", "5y"]
 interval_options = ["1d", "1h", "30m", "15m", "5m"]
@@ -38,41 +56,24 @@ interval_options = ["1d", "1h", "30m", "15m", "5m"]
 # App layout
 app.layout = html.Div(style={'backgroundColor': '#F5F5F5', 'padding': '30px'}, children=[
     html.Div([
-        html.H1("📈 FinSent – Stock Price Dashboard",
-                style={'textAlign': 'center', 'color': '#1f2937', 'marginBottom': '10px'}),
-        html.P("Track real-time stock prices and trends with attractive visuals.", 
-               style={'textAlign': 'center', 'color': '#4b5563'}),
+        html.H1("📈 FinSent – Stock Price Dashboard", style={'textAlign': 'center', 'color': '#1f2937'}),
+        html.P("Track real-time stock prices and trends with attractive visuals.", style={'textAlign': 'center', 'color': '#4b5563'}),
     ]),
 
     html.Div([
         html.Div([
             html.Label("Select Stock", style={'fontWeight': 'bold'}),
-            dcc.Dropdown(
-                id='ticker-select',
-                options=stock_options,
-                value='RELIANCE.NS',
-                style={'marginBottom': '15px'}
-            ),
+            dcc.Dropdown(id='ticker-select', options=stock_options, value='RELIANCE.NS', style={'marginBottom': '15px'}),
         ], style={'width': '30%', 'display': 'inline-block', 'paddingRight': '20px'}),
 
         html.Div([
             html.Label("Select Period", style={'fontWeight': 'bold'}),
-            dcc.Dropdown(
-                id='period-select',
-                options=[{'label': i, 'value': i} for i in period_options],
-                value='1mo',
-                style={'marginBottom': '15px'}
-            ),
+            dcc.Dropdown(id='period-select', options=[{'label': i, 'value': i} for i in period_options], value='1mo', style={'marginBottom': '15px'}),
         ], style={'width': '20%', 'display': 'inline-block'}),
 
         html.Div([
             html.Label("Select Interval", style={'fontWeight': 'bold'}),
-            dcc.Dropdown(
-                id='interval-select',
-                options=[{'label': i, 'value': i} for i in interval_options],
-                value='1d',
-                style={'marginBottom': '15px'}
-            ),
+            dcc.Dropdown(id='interval-select', options=[{'label': i, 'value': i} for i in interval_options], value='1d', style={'marginBottom': '15px'}),
         ], style={'width': '20%', 'display': 'inline-block', 'paddingLeft': '20px'}),
 
         html.Div([
@@ -84,7 +85,6 @@ app.layout = html.Div(style={'backgroundColor': '#F5F5F5', 'padding': '30px'}, c
     ], style={'marginBottom': '30px'}),
 
     html.Div(id='output-area', style={'marginBottom': '20px', 'fontWeight': 'bold'}),
-
     html.Div(id='table-container', style={'marginBottom': '30px'}),
 
     html.Div([
@@ -148,15 +148,16 @@ def update_stock_data(n_clicks, ticker, period, interval):
         }
     }
 
-    # Dummy news headlines
-    sample_headlines = [
-        f"{ticker} stock surges after strong quarterly results.",
-        f"Analysts warn about inflation affecting {ticker}.",
-        f"{ticker} expected to outperform peers in the coming months."
-    ]
+    # ✅ Fetch live headlines from Yahoo RSS
+    sample_headlines = fetch_headlines_from_yahoo(ticker)
 
+    if not sample_headlines:
+        sample_headlines = [f"No recent news found for {ticker}."]
+
+    # Analyze sentiment
     sentiment_results = analyze_news_sentiment(sample_headlines)
 
+    # Display results
     sentiment_html = html.Div([
         html.H4("📰 News Sentiment", style={'marginTop': '30px'}),
         html.Ul([
