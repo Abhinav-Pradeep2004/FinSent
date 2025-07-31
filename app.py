@@ -11,66 +11,7 @@ st.title("📈 FinSent – Stock Price Dashboard")
 st.write("Track real-time stock prices and news sentiment analysis for top stocks.")
 
 # 🔹 Stock options
-stock_options = {
-    # US Tech Giants
-    'Apple (AAPL)': 'AAPL',
-    'Google (GOOG)': 'GOOG',
-    'Microsoft (MSFT)': 'MSFT',
-    'Amazon (AMZN)': 'AMZN',
-    'Tesla (TSLA)': 'TSLA',
-    'Meta Platforms (META)': 'META',
-    'NVIDIA (NVDA)': 'NVDA',
-    'Netflix (NFLX)': 'NFLX',
-    'Intel (INTC)': 'INTC',
-    'Adobe (ADBE)': 'ADBE',
-    'Oracle (ORCL)': 'ORCL',
-    'AMD (AMD)': 'AMD',
-    'Zoom Video (ZM)': 'ZM',
-    'Salesforce (CRM)': 'CRM',
-    'Uber (UBER)': 'UBER',
 
-    # Indian IT & Tech
-    'Infosys (INFY.NS)': 'INFY.NS',
-    'TCS (TCS.NS)': 'TCS.NS',
-    'Wipro (WIPRO.NS)': 'WIPRO.NS',
-    'HCL Tech (HCLTECH.NS)': 'HCLTECH.NS',
-    'Tech Mahindra (TECHM.NS)': 'TECHM.NS',
-    'LTIMindtree (LTIM.NS)': 'LTIM.NS',
-
-    # Indian Banks & Finance
-    'HDFC Bank (HDFCBANK.NS)': 'HDFCBANK.NS',
-    'ICICI Bank (ICICIBANK.NS)': 'ICICIBANK.NS',
-    'State Bank of India (SBIN.NS)': 'SBIN.NS',
-    'Axis Bank (AXISBANK.NS)': 'AXISBANK.NS',
-    'Kotak Bank (KOTAKBANK.NS)': 'KOTAKBANK.NS',
-    'Bajaj Finance (BAJFINANCE.NS)': 'BAJFINANCE.NS',
-    'Bajaj Finserv (BAJAJFINSV.NS)': 'BAJAJFINSV.NS',
-
-    # Indian FMCG & Consumer
-    'Hindustan Unilever (HINDUNILVR.NS)': 'HINDUNILVR.NS',
-    'ITC (ITC.NS)': 'ITC.NS',
-    'Dabur (DABUR.NS)': 'DABUR.NS',
-    'Nestle India (NESTLEIND.NS)': 'NESTLEIND.NS',
-    'Britannia (BRITANNIA.NS)': 'BRITANNIA.NS',
-    'Marico (MARICO.NS)': 'MARICO.NS',
-
-    # Indian Energy & Industrial
-    'Reliance Industries (RELIANCE.NS)': 'RELIANCE.NS',
-    'L&T (LT.NS)': 'LT.NS',
-    'Adani Enterprises (ADANIENT.NS)': 'ADANIENT.NS',
-    'Adani Green (ADANIGREEN.NS)': 'ADANIGREEN.NS',
-    'NTPC (NTPC.NS)': 'NTPC.NS',
-    'ONGC (ONGC.NS)': 'ONGC.NS',
-    'Power Grid Corp (POWERGRID.NS)': 'POWERGRID.NS',
-
-    # Indian Automobiles
-    'Tata Motors (TATAMOTORS.NS)': 'TATAMOTORS.NS',
-    'Mahindra & Mahindra (M&M.NS)': 'M&M.NS',
-    'Maruti Suzuki (MARUTI.NS)': 'MARUTI.NS',
-    'Eicher Motors (EICHERMOT.NS)': 'EICHERMOT.NS',
-    'Hero MotoCorp (HEROMOTOCO.NS)': 'HEROMOTOCO.NS',
-    'Bajaj Auto (BAJAJ-AUTO.NS)': 'BAJAJ-AUTO.NS',
-}
 
 period_options = ["5d", "1mo", "3mo", "6mo", "1y", "2y", "5y"]
 interval_options = ["1d", "1h", "30m", "15m", "5m"]
