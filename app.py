@@ -20,8 +20,8 @@ falcons_logo = get_image_as_base64("assest/falcons.png")
 
 st.markdown(
     f"""
-    <div style="position: fixed; top: 50px; right: 25px; z-index: 999;">
-        <img src="data:image/png;base64,{falcons_logo}" width="100">
+    <div style="position: fixed; top: 80px; right: 40px; z-index: 999;">
+        <img src="data:image/png;base64,{falcons_logo}" width="250">
     </div>
     """,
     unsafe_allow_html=True
