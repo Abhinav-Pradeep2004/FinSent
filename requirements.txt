@@ -3,14 +3,13 @@ scipy==1.10.1
 statsmodels==0.13.5
 pmdarima==1.8.5
 pandas
-dash
+streamlit
 yfinance
 vaderSentiment
-<<<<<<< HEAD
 matplotlib
-=======
 matplotlib
 scikit-learn
 tensorflow
 feedparser
->>>>>>> 6f2624e08afb2e8ec1101ce330bbda255140f058
+feedparser
+plotly
